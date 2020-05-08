@@ -1,5 +1,4 @@
-﻿using SRTPluginProviderRE7.Structures;
-using System;
+﻿using System;
 
 namespace SRTPluginProviderRE7
 {
