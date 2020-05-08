@@ -22,12 +22,6 @@
   </Target>
 
   <ItemGroup>
-    <Compile Remove="Structures\**" />
-    <EmbeddedResource Remove="Structures\**" />
-    <None Remove="Structures\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\ProcessMemory\ProcessMemory\ProcessMemory.csproj" />
     <ProjectReference Include="..\..\SRTHost\SRTPluginBase\SRTPluginBase.csproj">
       <Private>false</Private>
