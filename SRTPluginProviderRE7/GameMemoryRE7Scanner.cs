@@ -45,13 +45,13 @@ namespace SRTPluginProviderRE7
             {
                 BaseAddress = NativeWrappers.GetProcessBaseAddress(pid, PInvoke.ListModules.LIST_MODULES_64BIT).ToInt64(); // Bypass .NET's managed solution for getting this and attempt to get this info ourselves via PInvoke since some users are getting 299 PARTIAL COPY when they seemingly shouldn't.
 
-                PointerPlayerHP = new MultilevelPointer(memoryAccess, BaseAddress + pointerAddressHP, 0xC0L, 0x48L, 0x98L, 0x78L);
+                PointerPlayerHP = new MultilevelPointer(memoryAccess, BaseAddress + pointerAddressHP, 0x98L, 0x68L, 0x70L);
             }
         }
 
         private void SelectPointerAddresses()
         {
-            pointerAddressHP = 0x081DF348;
+            pointerAddressHP = 0x08223758;
         }
 
 
@@ -66,7 +66,7 @@ namespace SRTPluginProviderRE7
         internal IGameMemoryRE7 Refresh()
         {
             // Player HP
-            gameMemoryValues.PlayerCurrentHealth = PointerPlayerHP.DerefInt(0x20);
+            gameMemoryValues.PlayerCurrentHealth = PointerPlayerHP.DerefFloat(0x24);
             HasScanned = true;
             return gameMemoryValues;
         }
