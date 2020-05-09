@@ -5,6 +5,6 @@ namespace SRTPluginProviderRE7
 {
     public struct GameMemoryRE7 : IGameMemoryRE7
     {
-        public int PlayerCurrentHealth { get; set; }
+        public float PlayerCurrentHealth { get; set; }
     }
 }
