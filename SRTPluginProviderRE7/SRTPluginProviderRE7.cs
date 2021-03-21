@@ -13,10 +13,27 @@ namespace SRTPluginProviderRE7
         private IPluginHostDelegates hostDelegates;
         public IPluginInfo Info => new PluginInfo();
 
+        public bool GameRunning
+        {
+            get
+            {
+                if (gameMemoryScanner != null && !gameMemoryScanner.ProcessRunning)
+                {
+                    processId = GetProcessId();
+                    if (processId != null)
+                    {
+                        gameMemoryScanner.Initialize((int)processId); // Re-initialize and attempt to continue.
+                    }
+                }
+
+                return gameMemoryScanner != null && gameMemoryScanner.ProcessRunning;
+            }
+        }
+
         public int Startup(IPluginHostDelegates hostDelegates)
         {
             this.hostDelegates = hostDelegates;
-            processId = Process.GetProcessesByName("re7")?.FirstOrDefault()?.Id;
+            processId = GetProcessId();
             gameMemoryScanner = new GameMemoryRE7Scanner(processId);
             stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -36,6 +53,10 @@ namespace SRTPluginProviderRE7
         {
             try
             {
+                if (!GameRunning)
+                {
+                    return null;
+                }
                 if (!gameMemoryScanner.ProcessRunning)
                 {
                     //hostDelegates.Exit();

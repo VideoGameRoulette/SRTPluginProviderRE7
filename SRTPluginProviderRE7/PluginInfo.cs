@@ -7,7 +7,7 @@ namespace SRTPluginProviderRE7
     {
         public string Name => "Game Memory Provider (Resident Evil 7)";
 
-        public string Description => "A game memory provider plugin for Resident Evil 7.";
+        public string Description => "A game memory provider plugin for Resident Evil 7 (Microsoft Store).";
 
         public string Author => "VideoGameRoulette";
 
