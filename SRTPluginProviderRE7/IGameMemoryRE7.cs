@@ -10,9 +10,8 @@ namespace SRTPluginProviderRE7
         float CurrentHP { get; set; }
         float MaxHP { get; set; }
         long ItemCount { get; set; }
-        List<uint> ItemLength { get; set; }
-        List<byte[]> ItemNames { get; set; }
-        List<uint> ItemQuantity { get; set; }
+        List<string> ItemNames { get; set; }
+        List<int> ItemQuantity { get; set; }
         List<byte> ItemSlot { get; set; }
     }
 }

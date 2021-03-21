@@ -59,7 +59,7 @@ namespace SRTPluginProviderRE7
                 PointerDA = new MultilevelPointer(memoryAccess, BaseAddress + difficultyAdjustment);
                 PointerHP = new MultilevelPointer(memoryAccess, BaseAddress + hitPoints, 0xA0L, 0xD0L, 0x70L);
                 PointerItemCount = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L);
-                //GetItems();
+                GetItems();
             }
         }
 
@@ -98,10 +98,11 @@ namespace SRTPluginProviderRE7
             {
                 for (var i = 0; i < gameMemoryValues.ItemCount; i++)
                 {
-                    gameMemoryValues.ItemLength[i] = PointerItemLength[i].DerefUInt(0x20);
-                    gameMemoryValues.ItemNames[i] = PointerItemNames[i].DerefByteArray(0x24, (int)gameMemoryValues.ItemLength[i]);
-                    gameMemoryValues.ItemLength[i] = PointerItemQuantity[i].DerefUInt(0x88);
-                    gameMemoryValues.ItemLength[i] = PointerItemSlot[i].DerefByte(0xB0);
+                    var length = PointerItemLength[i].DerefInt(0x20);
+                    var bytes = PointerItemNames[i].DerefByteArray(0x24, length * 2);
+                    gameMemoryValues.ItemNames[i] = System.Text.Encoding.Unicode.GetString(bytes);
+                    gameMemoryValues.ItemQuantity[i] = PointerItemQuantity[i].DerefInt(0x88);
+                    gameMemoryValues.ItemSlot[i] = PointerItemSlot[i].DerefByte(0xB0);
                 }
             }
         }
@@ -129,7 +130,7 @@ namespace SRTPluginProviderRE7
             PointerDA.UpdatePointers();
             PointerHP.UpdatePointers();
             PointerItemCount.UpdatePointers();
-            //UpdateItems();
+            UpdateItems();
         }
 
         internal IGameMemoryRE7 Refresh()
@@ -139,7 +140,7 @@ namespace SRTPluginProviderRE7
             gameMemoryValues.CurrentHP = PointerHP.DerefFloat(0x24);
             gameMemoryValues.MaxHP = PointerHP.DerefFloat(0x20);
             gameMemoryValues.ItemCount = PointerItemCount.DerefLong(0x28);
-            //RefreshItems();
+            RefreshItems();
 
             HasScanned = true;
             return gameMemoryValues;

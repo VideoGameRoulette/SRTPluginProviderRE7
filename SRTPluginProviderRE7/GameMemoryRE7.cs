@@ -11,9 +11,8 @@ namespace SRTPluginProviderRE7
         public float CurrentHP { get; set; }
         public float MaxHP { get; set; }
         public long ItemCount { get; set; }
-        public List<uint> ItemLength { get; set; }
-        public List<byte[]> ItemNames { get; set; }
-        public List<uint> ItemQuantity { get; set; }
+        public List<string> ItemNames { get; set; }
+        public List<int> ItemQuantity { get; set; }
         public List<byte> ItemSlot { get; set; }
 
     }
