@@ -14,11 +14,20 @@ namespace SRTPluginProviderRE7
         public int ProcessExitCode => (memoryAccess != null) ? memoryAccess.ProcessExitCode : 0;
 
         // Pointer Address Variables
-        private long pointerAddressHP;
+        private long difficultyAdjustment;
+        private long hitPoints;
+        private long itemCount;
 
         // Pointer Classes
         private long BaseAddress { get; set; }
-        private MultilevelPointer PointerPlayerHP { get; set; }
+        private MultilevelPointer PointerDA { get; set; }
+        private MultilevelPointer PointerHP { get; set; }
+        private MultilevelPointer PointerItemCount { get; set; }
+
+        private MultilevelPointer[] PointerItemLength { get; set; }
+        private MultilevelPointer[] PointerItemNames { get; set; }
+        private MultilevelPointer[] PointerItemQuantity { get; set; }
+        private MultilevelPointer[] PointerItemSlot { get; set; }
 
         /// <summary>
         /// 
@@ -27,7 +36,7 @@ namespace SRTPluginProviderRE7
         internal GameMemoryRE7Scanner(int? pid = null)
         {
             gameMemoryValues = new GameMemoryRE7();
-            SelectPointerAddresses();
+
             if (pid != null)
             {
                 Initialize(pid.Value);
@@ -39,19 +48,76 @@ namespace SRTPluginProviderRE7
 
         internal void Initialize(int pid)
         {
+            SelectPointerAddressesSteam();
+            //SelectPointerAddressesWindows();
             memoryAccess = new ProcessMemory.ProcessMemory(pid);
 
             if (ProcessRunning)
             {
                 BaseAddress = NativeWrappers.GetProcessBaseAddress(pid, PInvoke.ListModules.LIST_MODULES_64BIT).ToInt64(); // Bypass .NET's managed solution for getting this and attempt to get this info ourselves via PInvoke since some users are getting 299 PARTIAL COPY when they seemingly shouldn't.
 
-                PointerPlayerHP = new MultilevelPointer(memoryAccess, BaseAddress + pointerAddressHP, 0x98L, 0x68L, 0x70L);
+                PointerDA = new MultilevelPointer(memoryAccess, BaseAddress + difficultyAdjustment);
+                PointerHP = new MultilevelPointer(memoryAccess, BaseAddress + hitPoints, 0xA0L, 0xD0L, 0x70L);
+                PointerItemCount = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L);
+                //GetItems();
             }
         }
 
-        private void SelectPointerAddresses()
+        private void GetItems()
         {
-            pointerAddressHP = 0x08223758;
+            if (gameMemoryValues.ItemCount != 0)
+            {
+                for (var i = 0; i < gameMemoryValues.ItemCount; i++)
+                {
+                    long position = (0x30L + (0x8L * i));
+                    PointerItemLength[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L, 0x80L, 0x20L);
+                    PointerItemNames[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L, 0x80L, 0x24L);
+                    PointerItemQuantity[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L, 0x88L);
+                    PointerItemSlot[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L, 0xB0L);
+                }
+            }
+        }
+
+        private void UpdateItems()
+        {
+            if (gameMemoryValues.ItemCount != 0)
+            {
+                for (var i = 0; i < gameMemoryValues.ItemCount; i++)
+                {
+                    PointerItemLength[i].UpdatePointers();
+                    PointerItemNames[i].UpdatePointers();
+                    PointerItemQuantity[i].UpdatePointers();
+                    PointerItemSlot[i].UpdatePointers();
+                }
+            }
+        }
+
+        private void RefreshItems()
+        {
+            if (gameMemoryValues.ItemCount != 0)
+            {
+                for (var i = 0; i < gameMemoryValues.ItemCount; i++)
+                {
+                    gameMemoryValues.ItemLength[i] = PointerItemLength[i].DerefUInt(0x20);
+                    gameMemoryValues.ItemNames[i] = PointerItemNames[i].DerefByteArray(0x24, (int)gameMemoryValues.ItemLength[i]);
+                    gameMemoryValues.ItemLength[i] = PointerItemQuantity[i].DerefUInt(0x88);
+                    gameMemoryValues.ItemLength[i] = PointerItemSlot[i].DerefByte(0xB0);
+                }
+            }
+        }
+
+        private void SelectPointerAddressesSteam()
+        {
+            difficultyAdjustment = 0x081FA818;
+            hitPoints = 0x081EA150;
+            itemCount = 0x081F1308;
+        }
+
+        private void SelectPointerAddressesWindows()
+        {
+            difficultyAdjustment = 0x0933E618;
+            hitPoints = 0x09373DB8;
+            itemCount = 0x093352C0;
         }
 
 
@@ -60,18 +126,26 @@ namespace SRTPluginProviderRE7
         /// </summary>
         internal void UpdatePointers()
         {
-            PointerPlayerHP.UpdatePointers();
+            PointerDA.UpdatePointers();
+            PointerHP.UpdatePointers();
+            PointerItemCount.UpdatePointers();
+            //UpdateItems();
         }
 
         internal IGameMemoryRE7 Refresh()
         {
-            // Player HP
-            gameMemoryValues.PlayerCurrentHealth = PointerPlayerHP.DerefFloat(0x24);
+            gameMemoryValues.CurrentDA = PointerDA.DerefFloat(0xF8);
+            gameMemoryValues.MaxDA = PointerDA.DerefFloat(0xFC);
+            gameMemoryValues.CurrentHP = PointerHP.DerefFloat(0x24);
+            gameMemoryValues.MaxHP = PointerHP.DerefFloat(0x20);
+            gameMemoryValues.ItemCount = PointerItemCount.DerefLong(0x28);
+            //RefreshItems();
+
             HasScanned = true;
             return gameMemoryValues;
         }
 
-        #region IDisposable Support
+#region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
         protected virtual void Dispose(bool disposing)
@@ -106,6 +180,6 @@ namespace SRTPluginProviderRE7
             // TODO: uncomment the following line if the finalizer is overridden above.
             // GC.SuppressFinalize(this);
         }
-        #endregion
+#endregion
     }
 }
