@@ -24,10 +24,8 @@ namespace SRTPluginProviderRE7
         private MultilevelPointer PointerHP { get; set; }
         private MultilevelPointer PointerItemCount { get; set; }
 
-        private MultilevelPointer[] PointerItemLength { get; set; }
         private MultilevelPointer[] PointerItemNames { get; set; }
-        private MultilevelPointer[] PointerItemQuantity { get; set; }
-        private MultilevelPointer[] PointerItemSlot { get; set; }
+        private MultilevelPointer[] PointerItemInfo { get; set; }
 
         /// <summary>
         /// 
@@ -59,7 +57,8 @@ namespace SRTPluginProviderRE7
                 PointerDA = new MultilevelPointer(memoryAccess, BaseAddress + difficultyAdjustment);
                 PointerHP = new MultilevelPointer(memoryAccess, BaseAddress + hitPoints, 0xA0L, 0xD0L, 0x70L);
                 PointerItemCount = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L);
-                GetItems();
+                PointerItemNames = new MultilevelPointer[12];
+                PointerItemInfo = new MultilevelPointer[12];
             }
         }
 
@@ -70,12 +69,11 @@ namespace SRTPluginProviderRE7
                 for (var i = 0; i < gameMemoryValues.ItemCount; i++)
                 {
                     long position = (0x30L + (0x8L * i));
-                    PointerItemLength[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L, 0x80L, 0x20L);
-                    PointerItemNames[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L, 0x80L, 0x24L);
-                    PointerItemQuantity[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L, 0x88L);
-                    PointerItemSlot[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L, 0xB0L);
+                    PointerItemNames[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L, 0x80L);
+                    PointerItemInfo[i] = new MultilevelPointer(memoryAccess, BaseAddress + itemCount, 0x60L, 0x20L, position, 0x28L);
                 }
             }
+            UpdateItems();
         }
 
         private void UpdateItems()
@@ -84,12 +82,11 @@ namespace SRTPluginProviderRE7
             {
                 for (var i = 0; i < gameMemoryValues.ItemCount; i++)
                 {
-                    PointerItemLength[i].UpdatePointers();
                     PointerItemNames[i].UpdatePointers();
-                    PointerItemQuantity[i].UpdatePointers();
-                    PointerItemSlot[i].UpdatePointers();
+                    PointerItemInfo[i].UpdatePointers();
                 }
             }
+            RefreshItems();
         }
 
         private void RefreshItems()
@@ -98,11 +95,11 @@ namespace SRTPluginProviderRE7
             {
                 for (var i = 0; i < gameMemoryValues.ItemCount; i++)
                 {
-                    var length = PointerItemLength[i].DerefInt(0x20);
+                    var length = PointerItemNames[i].DerefInt(0x20);
                     var bytes = PointerItemNames[i].DerefByteArray(0x24, length * 2);
                     gameMemoryValues.ItemNames[i] = System.Text.Encoding.Unicode.GetString(bytes);
-                    gameMemoryValues.ItemQuantity[i] = PointerItemQuantity[i].DerefInt(0x88);
-                    gameMemoryValues.ItemSlot[i] = PointerItemSlot[i].DerefByte(0xB0);
+                    gameMemoryValues.ItemQuantity[i] = PointerItemInfo[i].DerefInt(0x88);
+                    gameMemoryValues.ItemSlot[i] = PointerItemInfo[i].DerefByte(0xB0);
                 }
             }
         }
@@ -130,7 +127,7 @@ namespace SRTPluginProviderRE7
             PointerDA.UpdatePointers();
             PointerHP.UpdatePointers();
             PointerItemCount.UpdatePointers();
-            UpdateItems();
+            
         }
 
         internal IGameMemoryRE7 Refresh()
@@ -140,8 +137,7 @@ namespace SRTPluginProviderRE7
             gameMemoryValues.CurrentHP = PointerHP.DerefFloat(0x24);
             gameMemoryValues.MaxHP = PointerHP.DerefFloat(0x20);
             gameMemoryValues.ItemCount = PointerItemCount.DerefLong(0x28);
-            RefreshItems();
-
+            GetItems();
             HasScanned = true;
             return gameMemoryValues;
         }
