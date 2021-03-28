@@ -14,12 +14,13 @@ namespace SRTPluginProviderRE7.Structs
             get
             {
                 if (IsAlive)
-                    return string.Format("{0} / {1} ({2:P1})", CurrentHP, MaximumHP, Percentage);
+                    return string.Format("ID: {0} {1} / {2} ({3:P1})", ID, CurrentHP, MaximumHP, Percentage);
                 else
                     return "DEAD / DEAD (0%)";
             }
         }
 
+        public ushort ID { get; set; }
         public float MaximumHP { get; set; }
         public float CurrentHP { get; set; }
         public bool IsAlive => MaximumHP > 0 && CurrentHP > 0 && CurrentHP <= MaximumHP;
@@ -27,6 +28,7 @@ namespace SRTPluginProviderRE7.Structs
 
         public EnemyHP()
         {
+            this.ID = 0;
             this.MaximumHP = 0;
             this.CurrentHP = 0;
         }

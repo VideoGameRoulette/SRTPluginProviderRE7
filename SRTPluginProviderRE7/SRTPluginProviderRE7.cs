@@ -13,7 +13,7 @@ namespace SRTPluginProviderRE7
         private IPluginHostDelegates hostDelegates;
         public IPluginInfo Info => new PluginInfo();
 
-        public bool get_GameRunning
+        public bool GameRunning
         {
             get
             {
@@ -53,7 +53,7 @@ namespace SRTPluginProviderRE7
         {
             try
             {
-                if (!get_GameRunning)
+                if (!GameRunning)
                 {
                     return null;
                 }
